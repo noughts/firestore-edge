@@ -1,6 +1,7 @@
-import { getAccessToken } from "./auth";
+// import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
+import { getAccessToken } from "./auth.js";
 import { DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot } from "./types";
-import { formatMap } from "./util";
+export * from './auth.js';
 
 
 

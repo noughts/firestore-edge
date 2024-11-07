@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES6",
     "module": "ESNext",
-    "lib": ["ESNext", "DOM"],
     "declaration": true,
-    "outDir": "dist",
-    "moduleResolution": "node",
+    "outDir": "./dist",
     "strict": true,
-    "esModuleInterop": true
+    "moduleResolution": "node"
   },
-  "include": ["src"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/__tests__/*"]
 }
