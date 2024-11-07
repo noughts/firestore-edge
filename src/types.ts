@@ -2,6 +2,7 @@ export type Firestore = {
     projectId: string;
     privateKey: string;
     clientEmail: string;
+    cachedAccessToken?: string;
 }
 export type Query<T1, T2> = {
 

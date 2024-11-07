@@ -5,7 +5,7 @@ export * from './auth.js';
 
 
 
-export function getFirestore(config?: Firestore): Firestore {
+export function getFirestore(config?: Partial<Firestore>): Firestore {
     const projectId = config?.projectId ?? process.env.FIREBASE_PROJECT_ID;
     const privateKey = config?.privateKey ?? process.env.FIREBASE_PRIVATE_KEY;
     const clientEmail = config?.clientEmail ?? process.env.FIREBASE_CLIENT_EMAIL;
@@ -13,6 +13,7 @@ export function getFirestore(config?: Firestore): Firestore {
     if (!privateKey) throw new Error('process.env["FIREBASE_PRIVATE_KEY"] is not set');
     if (!clientEmail) throw new Error('process.env["FIREBASE_CLIENT_EMAIL"] is not set');
     return {
+        cachedAccessToken: config?.cachedAccessToken,
         projectId,
         clientEmail,
         privateKey,
@@ -28,7 +29,9 @@ export function doc(firestore: Firestore, path: string, ...pathSegments: string[
 }
 
 export async function getDoc<AppModelType, DbModelType extends DocumentData>(reference: DocumentReference<AppModelType, DbModelType>): Promise<DocumentSnapshot<AppModelType, DbModelType>> {
-    const accessToken = await getAccessToken(reference.firestore);
+    console.time("accessToken")
+    const accessToken = reference.firestore.cachedAccessToken ?? await getAccessToken(reference.firestore);
+    console.timeEnd("accessToken")
 
     const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}/${reference.id}`;
     const method = "GET";
@@ -36,7 +39,9 @@ export async function getDoc<AppModelType, DbModelType extends DocumentData>(ref
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
+    console.time("fetch")
     const res = await fetch(url, { method, headers });
+    console.timeEnd("fetch")
     return await res.json();
 }
 
