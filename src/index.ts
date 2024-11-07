@@ -1,7 +1,7 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
 import { CollectionReference, DocResponse, DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
-import { formatMap } from "./util.js";
+import { formatMap, simplifyFields } from "./util.js";
 export * from './auth.js';
 
 
@@ -66,7 +66,7 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
 }
 
 export function getDataFromSnapshot(snapshot: DocumentSnapshot): any {
-
+    return simplifyFields(snapshot.fields);
 }
 
 

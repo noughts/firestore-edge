@@ -1,3 +1,5 @@
+import { Fields, FieldValue } from "./types";
+
 export function formatMap(map: any) {
     const fields = {} as any;
     for (const [key, value] of Object.entries(map)) {
@@ -26,4 +28,35 @@ function formatValue(value: any): any {
     } else {
         return { mapValue: formatMap(value) };
     }
+}
+
+
+export function simplifyFields(fields: Fields): Record<string, any> {
+    const simplifyValue = (value: FieldValue): any => {
+        if ('stringValue' in value) {
+            return value.stringValue;
+        }
+        if ('doubleValue' in value) {
+            return value.doubleValue;
+        }
+        if ('integerValue' in value) {
+            return value.integerValue;
+        }
+        if ('booleanValue' in value) {
+            return value.booleanValue;
+        }
+        if ('arrayValue' in value) {
+            return value.arrayValue.values.map(simplifyValue);
+        }
+        if ('mapValue' in value) {
+            return simplifyFields(value.mapValue.fields);
+        }
+        return null; // 想定されていない値には null を返す
+    };
+
+    const simplifiedObject: Record<string, any> = {};
+    for (const key in fields) {
+        simplifiedObject[key] = simplifyValue(fields[key]);
+    }
+    return simplifiedObject;
 }

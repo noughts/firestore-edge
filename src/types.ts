@@ -42,7 +42,7 @@ export type DocumentSnapshot = {
 }
 
 
-type FieldValue =
+export type FieldValue =
     | { stringValue: string }
     | { doubleValue: number }
     | { integerValue: number }
@@ -50,7 +50,7 @@ type FieldValue =
     | { arrayValue: { values: FieldValue[] } }
     | { mapValue: { fields: Record<string, FieldValue> } };
 
-type Fields = Record<string, FieldValue>;
+export type Fields = Record<string, FieldValue>;
 
 export type DocResponse = {
     name: string;

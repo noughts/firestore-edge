@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { addDoc, collection, doc, getDoc, getFirestore, setDoc } from "../src/index"
+import { addDoc, collection, doc, getDataFromSnapshot, getDoc, getFirestore, setDoc } from "../src/index"
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -23,7 +23,7 @@ describe("getDoc", () => {
 
 
 describe("データ追加", () => {
-    const db = getFirestore({ profile: true })
+    const db = getFirestore({ profile: false })
     it("addDoc", async () => {
         const _col = collection(db, "results");
         const res = await addDoc(_col, {
@@ -32,7 +32,12 @@ describe("データ追加", () => {
                 price: 1.23
             }
         })
-        console.log(res)
+        expect(res.id).toBeDefined();
+
+        const savedDoc = doc(db, "results", res.id);
+        const snapshot = await getDoc(savedDoc);
+        const data = getDataFromSnapshot(snapshot);
+        console.dir(data);
     })
     it("setDoc", async () => {
         const _doc = doc(db, "results", "hoge1");
