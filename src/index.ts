@@ -1,6 +1,7 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
-import { DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot } from "./types";
+import { CollectionReference, DocResponse, DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
+import { formatMap } from "./util.js";
 export * from './auth.js';
 
 
@@ -21,15 +22,24 @@ export function getFirestore(config?: Partial<Firestore>): Firestore {
     }
 }
 
-export function doc(firestore: Firestore, path: string, ...pathSegments: string[]): DocumentReference<DocumentData, DocumentData> {
+export function doc(firestore: Firestore, path: string, id: string): DocumentReference {
     return {
         firestore,
         path,
-        id: pathSegments[0],
+        id,
     }
 }
 
-export async function getDoc<AppModelType, DbModelType extends DocumentData>(reference: DocumentReference<AppModelType, DbModelType>): Promise<DocumentSnapshot<AppModelType, DbModelType>> {
+export function collection(firestore: Firestore, path: string): CollectionReference {
+    return {
+        firestore,
+        type: "collection",
+        path,
+    }
+}
+
+
+export async function getDoc(reference: DocumentReference): Promise<DocumentSnapshot> {
     if (reference.firestore.profile) console.time("getAccessToken")
     const accessToken = reference.firestore.cachedAccessToken ?? await getAccessToken(reference.firestore);
     if (reference.firestore.profile) console.timeEnd("getAccessToken")
@@ -43,32 +53,61 @@ export async function getDoc<AppModelType, DbModelType extends DocumentData>(ref
     if (reference.firestore.profile) console.time("fetch")
     const res = await fetch(url, { method, headers });
     if (reference.firestore.profile) console.timeEnd("fetch")
-    return await res.json();
+    const data: DocResponse = await res.json();
+    return {
+        id: takeLastComponentFromPathString(data.name),
+        fields: data.fields,
+        ref: {
+            id: takeLastComponentFromPathString(data.name),
+            path: data.name,
+            firestore: reference.firestore,
+        }
+    };
 }
 
-/*
-export async function saveData(name: string, data: unknown) {
-    const timestamp = new Date();
+export function getDataFromSnapshot(snapshot: DocumentSnapshot): any {
 
-    const { FIREBASE_PROJECT_ID } = process.env;
-    if (!FIREBASE_PROJECT_ID) {
-        throw new Error('process.env["FIREBASE_PROJECT_ID"] is not set');
-    }
+}
 
-    const collectionName = "test_collection"
 
-    const accessToken = await getAccessToken();
 
-    const url = `https://firestore.googleapis.com/v1beta1/projects/${FIREBASE_PROJECT_ID}/databases/%28default%29/documents/${collectionName}`;
+
+
+export async function addDoc(reference: CollectionReference, data: WithFieldValue): Promise<DocumentReference> {
+    const accessToken = await getAccessToken(reference.firestore);
+    const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}`;
     const method = "POST";
     const headers = {
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
-    const body = JSON.stringify(formatMap({ name, timestamp, data }));
+    const body = JSON.stringify(formatMap(data));
 
     const res = await fetch(url, { method, headers, body });
-    const document = await res.json();
-    return document;
+    const json: DocResponse = await res.json();
+    return {
+        firestore: reference.firestore,
+        path: json.name,
+        id: takeLastComponentFromPathString(json.name),
+    }
 }
-    */
+
+function takeLastComponentFromPathString(path: string) {
+    const ary = path.split("/")
+    return ary[ary.length - 1];
+}
+
+export async function setDoc(reference: DocumentReference, data: WithFieldValue): Promise<boolean> {
+    const accessToken = await getAccessToken(reference.firestore);
+    const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}/${reference.id}`;
+    console.log(url)
+    const method = "PATCH";
+    const headers = {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+    };
+    const body = JSON.stringify(formatMap(data));
+    const res = await fetch(url, { method, headers, body });
+    return res.status === 200;
+}
+

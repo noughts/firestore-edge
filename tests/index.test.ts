@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { doc, getDoc, getFirestore } from "../src/index"
+import { addDoc, collection, doc, getDoc, getFirestore, setDoc } from "../src/index"
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -9,7 +9,6 @@ it("hoge", () => {
 })
 
 describe("getDoc", () => {
-
     const db = getFirestore({ profile: true })
     it("1回目", async () => {
         const _doc = doc(db, "results", "switch");
@@ -20,7 +19,24 @@ describe("getDoc", () => {
         const res = await getDoc(_doc);
         console.log(res)
     })
-
 })
 
 
+describe("データ追加", () => {
+    const db = getFirestore({ profile: true })
+    it("addDoc", async () => {
+        const _col = collection(db, "results");
+        const res = await addDoc(_col, {
+            name: "milk", meta: {
+                brand: "foo",
+                price: 1.23
+            }
+        })
+        console.log(res)
+    })
+    it("setDoc", async () => {
+        const _doc = doc(db, "results", "hoge1");
+        const res = await setDoc(_doc, { foo: "fuga", price: 200 })
+        expect(res).toBeTruthy();
+    })
+})

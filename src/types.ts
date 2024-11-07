@@ -5,24 +5,58 @@ export type Firestore = {
     cachedAccessToken?: string;
     profile?: boolean;
 }
-export type Query<T1, T2> = {
 
+export type Query = {
+    firestore: Firestore;
+    type: "collection" | "query"
 }
 
+export type CollectionReference = Query & {
+    path: string;
+}
 
-export type DocumentReference<T1, T2> = {
+type Primitive = string | number | boolean | null | undefined;
+
+export type WithFieldValue = {
+    [key: string]: any;
+};
+
+export type DocumentReference = {
     firestore: Firestore;
     id: string;
     path: string;
 }
 
-export type QuerySnapshot<T1, T2> = {
+export type QuerySnapshot = {
 
 }
 export type DocumentData = {
 
 }
 
-export type DocumentSnapshot<T1, T2> = {
-
+export type DocumentSnapshot = {
+    id: string;
+    metadata?: SnapshotMetadata;
+    ref: DocumentReference;
+    fields: Fields;
 }
+
+
+type FieldValue =
+    | { stringValue: string }
+    | { doubleValue: number }
+    | { integerValue: number }
+    | { booleanValue: boolean }
+    | { arrayValue: { values: FieldValue[] } }
+    | { mapValue: { fields: Record<string, FieldValue> } };
+
+type Fields = Record<string, FieldValue>;
+
+export type DocResponse = {
+    name: string;
+    fields: Fields;
+    createTime: string;
+    updateTime: string;
+}
+
+type SnapshotMetadata = {}
