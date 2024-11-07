@@ -17,6 +17,7 @@ export function getFirestore(config?: Partial<Firestore>): Firestore {
         projectId,
         clientEmail,
         privateKey,
+        profile: config?.profile
     }
 }
 
@@ -29,9 +30,9 @@ export function doc(firestore: Firestore, path: string, ...pathSegments: string[
 }
 
 export async function getDoc<AppModelType, DbModelType extends DocumentData>(reference: DocumentReference<AppModelType, DbModelType>): Promise<DocumentSnapshot<AppModelType, DbModelType>> {
-    console.time("accessToken")
+    if (reference.firestore.profile) console.time("getAccessToken")
     const accessToken = reference.firestore.cachedAccessToken ?? await getAccessToken(reference.firestore);
-    console.timeEnd("accessToken")
+    if (reference.firestore.profile) console.timeEnd("getAccessToken")
 
     const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}/${reference.id}`;
     const method = "GET";
@@ -39,9 +40,9 @@ export async function getDoc<AppModelType, DbModelType extends DocumentData>(ref
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
-    console.time("fetch")
+    if (reference.firestore.profile) console.time("fetch")
     const res = await fetch(url, { method, headers });
-    console.timeEnd("fetch")
+    if (reference.firestore.profile) console.timeEnd("fetch")
     return await res.json();
 }
 

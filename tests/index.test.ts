@@ -10,7 +10,7 @@ it("hoge", () => {
 
 describe("getDoc", () => {
 
-    const db = getFirestore()
+    const db = getFirestore({ profile: true })
     it("1回目", async () => {
         const _doc = doc(db, "results", "switch");
         const res = await getDoc(_doc);
@@ -18,6 +18,7 @@ describe("getDoc", () => {
     it("2回目はキャッシュ済みのaccessTokenがが使われる", async () => {
         const _doc = doc(db, "results", "switch");
         const res = await getDoc(_doc);
+        console.log(res)
     })
 
 })

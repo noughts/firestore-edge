@@ -3,6 +3,7 @@ export type Firestore = {
     privateKey: string;
     clientEmail: string;
     cachedAccessToken?: string;
+    profile?: boolean;
 }
 export type Query<T1, T2> = {
 
