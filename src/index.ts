@@ -1,7 +1,8 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
-import { CollectionReference, DocResponse, DocumentData, DocumentReference, DocumentSnapshot, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
-import { formatMap, simplifyFields } from "./util.js";
+import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
+import { CollectionReference, DocResponse, DocumentReference, DocumentSnapshot, Fields, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
+import { formatMap, formatValueToPost, simplifyFields } from "./util.js";
 export * from './auth.js';
 
 
@@ -22,24 +23,42 @@ export function getFirestore(config?: Partial<Firestore>): Firestore {
     }
 }
 
-export function doc(firestore: Firestore, path: string, id?: string): DocumentReference {
-    return {
-        firestore,
-        path,
-        id,
+export function doc(firestore: Firestore, path: string, id: string): DocumentReference;
+export function doc(collection: CollectionReference, path: string): DocumentReference;
+
+export function doc(arg1: Firestore | CollectionReference, arg2: string, id?: string): DocumentReference {
+    if ("projectId" in arg1) {
+        return {
+            firestore: arg1,
+            path: arg2,
+            id,
+        }
+    } else {
+        return {
+            firestore: arg1.firestore,
+            path: arg1.path,
+            id: arg2,
+        }
     }
+
 }
+
+
 
 export function collection(firestore: Firestore, path: string): CollectionReference {
     return {
         firestore,
         type: "collection",
+        collectionId: path,
         path,
+        structuredQuery: {
+            from: [{ collectionId: path }],
+        }
     }
 }
 
 
-export async function getDoc(reference: DocumentReference): Promise<DocumentSnapshot> {
+export async function getDoc(reference: DocumentReference): Promise<DocumentSnapshot | undefined> {
     if (reference.firestore.profile) console.time("getAccessToken")
     const accessToken = reference.firestore.cachedAccessToken ?? await getAccessToken(reference.firestore);
     if (reference.firestore.profile) console.timeEnd("getAccessToken")
@@ -54,6 +73,9 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
     const res = await fetch(url, { method, headers });
     if (reference.firestore.profile) console.timeEnd("fetch")
     const data: DocResponse = await res.json();
+    if (data.error) {
+        return undefined;
+    }
     return {
         id: takeLastComponentFromPathString(data.name),
         fields: data.fields,
@@ -64,6 +86,112 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
         }
     };
 }
+
+
+export function where(fieldPath: string, opStr: WhereFilterOp, value: unknown): QueryFieldFilterConstraint {
+    return {
+        fieldFilter: {
+            field: { fieldPath },
+            op: mapOperator(opStr),
+            value: formatValueToPost(value),
+        },
+    }
+}
+
+export function query(baseQuery: Query, ...additionalQueries: QueryConstraint[]): Query {
+    let where = baseQuery.structuredQuery.where;
+    if (!where) {
+        if (additionalQueries.length == 1) {
+            where = additionalQueries[0];
+        } else {
+            where = {
+                compositeFilter: {
+                    op: "AND",
+                    filters: additionalQueries,
+                },
+            }
+        }
+    } else {
+        if ("compositeFilter" in where) {
+            where.compositeFilter.filters.push(...additionalQueries);
+        } else {
+            where = {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [where, ...additionalQueries],
+                },
+            }
+        }
+    }
+    return {
+        collectionId: baseQuery.collectionId,
+        firestore: baseQuery.firestore,
+        type: "query",
+        structuredQuery: {
+            from: [{ collectionId: baseQuery.collectionId }],
+            where,
+        }
+    }
+}
+
+type RunQueryResponse = RunQueryResponseDocument[];
+type RunQueryResponseDocument = {
+    document: {
+        name: string;
+        fields: Fields;
+        createdTime: string;
+        updateTime: string;
+    };
+    readTime: string;
+    skippedResults?: number;
+}
+
+export async function runQuery(firestore: Firestore, structuredQuery: StructuredQuery): Promise<RunQueryResponse> {
+    const url = `https://firestore.googleapis.com/v1beta1/projects/${firestore.projectId}/databases/%28default%29/documents:runQuery`;
+    const accessToken = await getAccessToken(firestore);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ structuredQuery }),
+    });
+    const data = await response.json();
+    if (response.status == 200) {
+        return data;
+    } else {
+        throw new Error(JSON.stringify(data, null, 2));
+    }
+};
+
+
+/**
+ * Firestoreからクエリ結果を取得します。
+ */
+export async function getDocs(query: Query): Promise<QuerySnapshot> {
+    const res = await runQuery(query.firestore, query.structuredQuery);
+    return {
+        query,
+        docs: res.map(x => {
+            return {
+                id: takeLastComponentFromPathString(x.document.name),
+                path: x.document.name,
+                fields: x.document.fields,
+                ref: {
+                    id: takeLastComponentFromPathString(x.document.name),
+                    firestore: query.firestore,
+                    path: x.document.name,
+                }
+            }
+        }),
+    }
+};
+
+
+
+
+
 
 export function getData(snapshot: DocumentSnapshot): any {
     return simplifyFields(snapshot.fields);

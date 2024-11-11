@@ -3,12 +3,15 @@ import { Fields, FieldValue } from "./types";
 export function formatMap(map: any) {
     const fields = {} as any;
     for (const [key, value] of Object.entries(map)) {
-        fields[key] = formatValue(value);
+        fields[key] = formatValueToPost(value);
     }
     return { fields };
 }
 
-function formatValue(value: any): any {
+/**
+ * Firestoreにデータを送信するために値をフォーマットします。
+ */
+export function formatValueToPost(value: any): any {
     if (value == null) {
         return { nullValue: null };
     } else if (typeof value == "boolean") {
@@ -24,7 +27,7 @@ function formatValue(value: any): any {
     } else if (value instanceof Date) {
         return { timestampValue: value.toISOString() };
     } else if (Array.isArray(value)) {
-        return { arrayValue: { values: value.map(formatValue) } };
+        return { arrayValue: { values: value.map(formatValueToPost) } };
     } else {
         return { mapValue: formatMap(value) };
     }

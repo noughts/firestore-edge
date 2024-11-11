@@ -1,0 +1,192 @@
+import dotenv from 'dotenv';
+import { it, describe, expect } from "vitest";
+import { collection, doc, getData, getDocs, getFirestore, query, runQuery, setDoc, where } from "../src";
+import { StructuredQuery } from '../src/query';
+import { pipe } from "@fxts/core"
+dotenv.config();
+
+describe("Query作成", () => {
+    it("一つのwhere", () => {
+        const db = getFirestore({ profile: true })
+        const col = collection(db, "cities");
+        const q = query(col, where("capital", "==", true));
+        console.log(q.structuredQuery)
+        const expected: StructuredQuery = {
+            from: [{ collectionId: "cities" }],
+            where: {
+                fieldFilter: {
+                    field: { fieldPath: "capital" },
+                    op: "EQUAL",
+                    value: { booleanValue: true }
+                }
+            }
+        }
+        expect(q.structuredQuery).toStrictEqual(expected)
+    })
+
+    describe("複合クエリ", () => {
+        const expected: StructuredQuery = {
+            from: [{ collectionId: "cities" }],
+            where: {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [
+                        {
+                            fieldFilter: {
+                                field: { fieldPath: "capital" },
+                                op: "EQUAL",
+                                value: { booleanValue: true }
+                            }
+                        },
+                        {
+                            fieldFilter: {
+                                field: { fieldPath: "population" },
+                                op: "GREATER_THAN",
+                                value: { integerValue: "1000000" }
+                            }
+                        }],
+                },
+            }
+        }
+        it("2つのwhereを同時にセット", () => {
+            const db = getFirestore({ profile: true })
+            const col = collection(db, "cities");
+            const q = query(col, where("capital", "==", true), where("population", ">", 1000000));
+            console.log(q.structuredQuery)
+            expect(q.structuredQuery).toStrictEqual(expected)
+        })
+        it("別々にセット", () => {
+            const db = getFirestore({ profile: true })
+            const col = collection(db, "cities");
+            const q1 = query(col, where("capital", "==", true));
+            const q2 = query(q1, where("population", ">", 1000000));
+            console.log(q2.structuredQuery)
+            expect(q2.structuredQuery).toStrictEqual(expected)
+        })
+        it("fxtsを使ってセット", () => {
+            const db = getFirestore({ profile: true })
+            const q = pipe(
+                collection(db, "cities"),
+                (x => query(x, where("capital", "==", true))),
+                (x => query(x, where("population", ">", 1000000))),
+            )
+            console.log(q.structuredQuery)
+            expect(q.structuredQuery).toStrictEqual(expected)
+        })
+    });
+
+
+})
+
+
+
+
+
+describe("runQuery", () => {
+    const db = getFirestore({ profile: true })
+    it("単純な where", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }],
+            where: {
+                fieldFilter: {
+                    field: { fieldPath: "capital" },
+                    op: "EQUAL",
+                    value: { booleanValue: true }
+                }
+            }
+        })
+        console.log(res.map(x => x.document.fields))
+    });
+
+    it("複合クエリ", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }],
+            where: {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [
+                        {
+                            fieldFilter: {
+                                field: { fieldPath: "capital" },
+                                op: "EQUAL",
+                                value: { booleanValue: true }
+                            }
+                        },
+                        {
+                            fieldFilter: {
+                                field: { fieldPath: "population" },
+                                op: "GREATER_THAN_OR_EQUAL",
+                                value: { integerValue: "1000000" }
+                            }
+                        }
+                    ]
+                }
+            }
+        })
+        console.log(res.map(x => x.document.fields))
+    });
+
+    it("orderBy", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }],
+            orderBy: [
+                {
+                    field: { fieldPath: "population" },
+                    direction: "ASCENDING"
+                }
+            ]
+        })
+        console.log(res.map(x => x.document.fields))
+    });
+
+})
+
+
+
+describe("Query", async () => {
+    const db = getFirestore({ profile: true })
+    const citiesRef = collection(db, "cities");
+
+    it("保存", async () => {
+        await setDoc(doc(citiesRef, "SF"), {
+            name: "San Francisco", state: "CA", country: "USA", capital: false, population: 860000, regions: ["west_coast", "norcal"]
+        });
+        await setDoc(doc(citiesRef, "LA"), {
+            name: "Los Angeles", state: "CA", country: "USA", apital: false, population: 3900000, regions: ["west_coast", "socal"]
+        });
+        await setDoc(doc(citiesRef, "DC"), {
+            name: "Washington, D.C.", state: null, country: "USA", capital: true, population: 680000, regions: ["east_coast"]
+        });
+        await setDoc(doc(citiesRef, "TOK"), {
+            name: "Tokyo", state: null, country: "Japan", capital: true, population: 9000000, regions: ["kanto", "honshu"]
+        });
+        await setDoc(doc(citiesRef, "BJ"), {
+            name: "Beijing", state: null, country: "China", capital: true, population: 21500000, regions: ["jingjinji", "hebei"]
+        });
+    })
+
+    it("単純なクエリ", async () => {
+        const q = query(citiesRef, where("capital", "==", true));
+        const res = await getDocs(q);
+        console.log(res.docs.map(x => getData(x)))
+    })
+
+    it("複合クエリ", async () => {
+        const q = query(citiesRef,
+            where("capital", "==", true),
+            where("population", ">", 1000000)
+        );
+        const res = await getDocs(q);
+        console.log(res.docs.map(x => getData(x)))
+    })
+    it("複合クエリ2", async () => {
+        const q1 = query(citiesRef, where("capital", "==", true));
+        const q2 = query(q1, where("population", ">", 1000000));
+        const res = await getDocs(q2);
+        console.log(res.docs.map(x => getData(x)))
+    })
+
+})
+
+
+

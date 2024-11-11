@@ -4,37 +4,28 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-it("Query", async () => {
-    const db = getFirestore({ profile: true })
-    const citiesRef = collection(db, "cities");
 
-    await setDoc(doc(citiesRef, "SF"), {
-        name: "San Francisco", state: "CA", country: "USA",
-        capital: false, population: 860000,
-        regions: ["west_coast", "norcal"]
-    });
-    await setDoc(doc(citiesRef, "LA"), {
-        name: "Los Angeles", state: "CA", country: "USA",
-        capital: false, population: 3900000,
-        regions: ["west_coast", "socal"]
-    });
-    await setDoc(doc(citiesRef, "DC"), {
-        name: "Washington, D.C.", state: null, country: "USA",
-        capital: true, population: 680000,
-        regions: ["east_coast"]
-    });
-    await setDoc(doc(citiesRef, "TOK"), {
-        name: "Tokyo", state: null, country: "Japan",
-        capital: true, population: 9000000,
-        regions: ["kanto", "honshu"]
-    });
-    await setDoc(doc(citiesRef, "BJ"), {
-        name: "Beijing", state: null, country: "China",
-        capital: true, population: 21500000,
-        regions: ["jingjinji", "hebei"]
-    });
+
+
+describe("setDoc", () => {
+    it("collection に id ありで setDoc", async () => {
+        const db = getFirestore({ profile: true })
+        const citiesRef = collection(db, "cities");
+        const success = await setDoc(doc(citiesRef, "SF"), {
+            name: "San Francisco", state: "CA", country: "USA",
+            capital: false, population: 860000,
+            regions: ["west_coast", "norcal"]
+        });
+        expect(success).toBeTruthy();
+
+        const snapshot = await getDoc(doc(db, "cities", "SF"));
+        expect(snapshot).toBeDefined();
+        if (!snapshot) return;
+        const data = getData(snapshot);
+        expect(data.state).toBe("CA")
+        expect(data.capital).toBeFalsy()
+    })
 })
-
 
 
 describe("getDoc", () => {
@@ -46,6 +37,8 @@ describe("getDoc", () => {
     it("2回目はキャッシュ済みのaccessTokenがが使われる", async () => {
         const _doc = doc(db, "results", "switch");
         const snapshot = await getDoc(_doc);
+        expect(snapshot).toBeDefined();
+        if (!snapshot) return;
         const data = getData(snapshot);
         console.log(data)
     })
@@ -63,11 +56,14 @@ describe("データ追加", () => {
             }
         })
         expect(res.id).toBeDefined();
+        if (!res.id) return;
 
         const savedRef = doc(db, "results", res.id);
         expect(savedRef.id).toBeDefined()
 
         const snapshot = await getDoc(savedRef);
+        expect(snapshot).toBeDefined();
+        if (!snapshot) return;
         const data = getData(snapshot);
         console.dir(snapshot.id, data);
     })
@@ -78,6 +74,8 @@ describe("データ追加", () => {
         expect(success).toBeTruthy();
 
         const savedSnapshot = await getDoc(_ref);
+        expect(savedSnapshot).toBeDefined();
+        if (!savedSnapshot) return;
         const data = getData(savedSnapshot)
         expect(data.price).toBe(price);
     })
