@@ -22,7 +22,7 @@ export function getFirestore(config?: Partial<Firestore>): Firestore {
     }
 }
 
-export function doc(firestore: Firestore, path: string, id: string): DocumentReference {
+export function doc(firestore: Firestore, path: string, id?: string): DocumentReference {
     return {
         firestore,
         path,
@@ -65,7 +65,7 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
     };
 }
 
-export function getDataFromSnapshot(snapshot: DocumentSnapshot): any {
+export function getData(snapshot: DocumentSnapshot): any {
     return simplifyFields(snapshot.fields);
 }
 
@@ -100,7 +100,6 @@ function takeLastComponentFromPathString(path: string) {
 export async function setDoc(reference: DocumentReference, data: WithFieldValue): Promise<boolean> {
     const accessToken = await getAccessToken(reference.firestore);
     const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}/${reference.id}`;
-    console.log(url)
     const method = "PATCH";
     const headers = {
         "Authorization": `Bearer ${accessToken}`,

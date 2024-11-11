@@ -40,7 +40,7 @@ export function simplifyFields(fields: Fields): Record<string, any> {
             return value.doubleValue;
         }
         if ('integerValue' in value) {
-            return value.integerValue;
+            return Number(value.integerValue);
         }
         if ('booleanValue' in value) {
             return value.booleanValue;

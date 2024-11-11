@@ -15,15 +15,13 @@ export type CollectionReference = Query & {
     path: string;
 }
 
-type Primitive = string | number | boolean | null | undefined;
-
 export type WithFieldValue = {
     [key: string]: any;
 };
 
 export type DocumentReference = {
     firestore: Firestore;
-    id: string;
+    id?: string;
     path: string;
 }
 
