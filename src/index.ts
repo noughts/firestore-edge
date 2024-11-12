@@ -1,6 +1,6 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
-import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
+import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
 import { CollectionReference, DocResponse, DocumentReference, DocumentSnapshot, Fields, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
 import { formatMap, formatValueToPost, simplifyFields } from "./util.js";
 export * from './auth.js';
@@ -98,38 +98,60 @@ export function where(fieldPath: string, opStr: WhereFilterOp, value: unknown): 
     }
 }
 
+export function limit(limit: number): QueryLimitConstraint {
+    return { type: "limit", limit };
+}
+
+
 export function query(baseQuery: Query, ...additionalQueries: QueryConstraint[]): Query {
-    let where = baseQuery.structuredQuery.where;
+    let result = baseQuery;
+    additionalQueries.forEach(x => {
+        result = addConstraintToQuery(result, x);
+    })
+    return result;
+}
+
+function addConstraintToQuery(query: Query, constraint: QueryConstraint): Query {
+    if ("limit" in constraint) {
+        return addLimitConstraintToQuery(query, constraint);
+    }
+    if ("fieldFilter" in constraint) {
+        return addFilterConstraintToQuery(query, constraint);
+    }
+    return query;
+}
+
+function addFilterConstraintToQuery(query: Query, constraint: QueryFieldFilterConstraint): Query {
+    let where = query.structuredQuery.where;
     if (!where) {
-        if (additionalQueries.length == 1) {
-            where = additionalQueries[0];
-        } else {
-            where = {
-                compositeFilter: {
-                    op: "AND",
-                    filters: additionalQueries,
-                },
-            }
-        }
+        where = constraint;
     } else {
         if ("compositeFilter" in where) {
-            where.compositeFilter.filters.push(...additionalQueries);
+            where.compositeFilter.filters.push(constraint);
         } else {
             where = {
                 compositeFilter: {
                     op: "AND",
-                    filters: [where, ...additionalQueries],
+                    filters: [where, constraint],
                 },
             }
         }
     }
     return {
-        collectionId: baseQuery.collectionId,
-        firestore: baseQuery.firestore,
-        type: "query",
+        ...query,
         structuredQuery: {
-            from: [{ collectionId: baseQuery.collectionId }],
+            from: [{ collectionId: query.collectionId }],
             where,
+        }
+    }
+}
+
+function addLimitConstraintToQuery(query: Query, constraint: QueryLimitConstraint): Query {
+    return {
+        ...query,
+        structuredQuery: {
+            ...query.structuredQuery,
+            limit: constraint.limit
         }
     }
 }
@@ -193,7 +215,7 @@ export async function getDocs(query: Query): Promise<QuerySnapshot> {
 
 
 
-export function getData(snapshot: DocumentSnapshot): any {
+export function getData(snapshot: { fields: Fields }): any {
     return simplifyFields(snapshot.fields);
 }
 

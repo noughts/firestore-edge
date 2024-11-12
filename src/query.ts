@@ -20,6 +20,11 @@ export type QueryFieldFilterConstraint = {
     };
 }
 
+export type QueryLimitConstraint = {
+    type: "limit" | "limitToLast"
+    limit: number;
+}
+
 export type QueryCompositeFilterConstraint = {
     compositeFilter: {
         op: 'AND' | 'OR';
@@ -27,7 +32,7 @@ export type QueryCompositeFilterConstraint = {
     };
 }
 
-export type QueryConstraint = QueryFieldFilterConstraint | QueryCompositeFilterConstraint;
+export type QueryConstraint = QueryFieldFilterConstraint | QueryCompositeFilterConstraint | QueryLimitConstraint;
 export type WhereFilterOp = '<' | '<=' | '==' | '!=' | '>=' | '>' | 'array-contains' | 'in' | 'array-contains-any' | 'not-in';
 export type QueryConstraintType = 'where' | 'orderBy' | 'limit' | 'limitToLast' | 'startAt' | 'startAfter' | 'endAt' | 'endBefore';
 

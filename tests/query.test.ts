@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 import { it, describe, expect } from "vitest";
-import { collection, doc, getData, getDocs, getFirestore, query, runQuery, setDoc, where } from "../src";
+import { collection, doc, getData, getDocs, getFirestore, limit, query, runQuery, setDoc, where } from "../src";
 import { StructuredQuery } from '../src/query';
 import { pipe } from "@fxts/core"
 dotenv.config();
+
+
+
 
 describe("Query作成", () => {
     it("一つのwhere", () => {
@@ -84,6 +87,14 @@ describe("Query作成", () => {
 
 describe("runQuery", () => {
     const db = getFirestore({ profile: true })
+
+    it("getAll", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }]
+        });
+        console.log(res.map(x => getData(x.document)))
+    });
+
     it("単純な where", async () => {
         const res = await runQuery(db, {
             from: [{ collectionId: "cities" }],
@@ -95,7 +106,7 @@ describe("runQuery", () => {
                 }
             }
         })
-        console.log(res.map(x => x.document.fields))
+        console.log(res.map(x => getData(x.document)))
     });
 
     it("複合クエリ", async () => {
@@ -132,11 +143,19 @@ describe("runQuery", () => {
             orderBy: [
                 {
                     field: { fieldPath: "population" },
-                    direction: "ASCENDING"
+                    direction: "DESCENDING"
                 }
             ]
         })
-        console.log(res.map(x => x.document.fields))
+        console.log(res.map(x => getData(x.document)))
+    });
+
+    it("limit", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }],
+            limit: 2,
+        })
+        console.log(res.map(x => getData(x.document)))
     });
 
 })
@@ -186,6 +205,13 @@ describe("Query", async () => {
         console.log(res.docs.map(x => getData(x)))
     })
 
+    it("limit", async () => {
+        const _limit = 2;
+        const q = query(citiesRef, limit(_limit));
+        const res = await getDocs(q);
+        expect(res.docs.length).toBe(_limit);
+        console.log(res.docs.map(x => getData(x)))
+    })
 })
 
 
