@@ -1,3 +1,5 @@
+import { getAccessToken } from "./auth";
+import { Fields, Firestore, Query } from "./types";
 
 
 
@@ -92,3 +94,99 @@ export const mapOperator = (op: WhereFilterOp): FirestoreOperator => {
             throw new Error(`Unsupported operator: ${op}`);
     }
 };
+
+
+
+export function addConstraintToQuery(query: Query, constraint: QueryConstraint): Query {
+    if ("limit" in constraint) {
+        return addLimitConstraintToQuery(query, constraint);
+    }
+    if ("fieldFilter" in constraint) {
+        return addFilterConstraintToQuery(query, constraint);
+    }
+    if ("direction" in constraint) {
+        return addOrderConstraintToQuery(query, constraint);
+    }
+    return query;
+}
+
+function addFilterConstraintToQuery(query: Query, constraint: QueryFieldFilterConstraint): Query {
+    let where = query.structuredQuery.where;
+    if (!where) {
+        where = constraint;
+    } else {
+        if ("compositeFilter" in where) {
+            where.compositeFilter.filters.push(constraint);
+        } else {
+            where = {
+                compositeFilter: {
+                    op: "AND",
+                    filters: [where, constraint],
+                },
+            }
+        }
+    }
+    return {
+        ...query,
+        structuredQuery: {
+            ...query.structuredQuery,
+            where,
+        }
+    }
+}
+
+function addLimitConstraintToQuery(query: Query, constraint: QueryLimitConstraint): Query {
+    return {
+        ...query,
+        structuredQuery: {
+            ...query.structuredQuery,
+            limit: constraint.limit
+        }
+    }
+}
+
+function addOrderConstraintToQuery(query: Query, constraint: QueryOrderByConstraint): Query {
+    const newVal = { field: { fieldPath: constraint.fieldPath }, direction: constraint.direction };
+    const orderBy = [...query.structuredQuery.orderBy ?? [], newVal];
+    return {
+        ...query,
+        structuredQuery: {
+            ...query.structuredQuery,
+            orderBy
+        }
+    }
+}
+
+
+
+type RunQueryResponse = RunQueryResponseDocument[];
+type RunQueryResponseDocument = {
+    document: {
+        name: string;
+        fields: Fields;
+        createdTime: string;
+        updateTime: string;
+    };
+    readTime: string;
+    skippedResults?: number;
+}
+
+export async function runQuery(firestore: Firestore, structuredQuery: StructuredQuery): Promise<RunQueryResponse> {
+    const url = `https://firestore.googleapis.com/v1beta1/projects/${firestore.projectId}/databases/%28default%29/documents:runQuery`;
+    const accessToken = await getAccessToken(firestore);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ structuredQuery }),
+    });
+    const data = await response.json();
+    if (response.status == 200) {
+        return data;
+    } else {
+        throw new Error(JSON.stringify(data, null, 2));
+    }
+};
+

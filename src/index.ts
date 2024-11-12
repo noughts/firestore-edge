@@ -1,8 +1,9 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
-import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, QueryOrderByConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
+import { batchWriteRaw, Write, WriteBatch } from "./batch.js";
+import { addConstraintToQuery, mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, QueryOrderByConstraint, runQuery, StructuredQuery, WhereFilterOp } from "./query.js";
 import { CollectionReference, DocResponse, DocumentReference, DocumentSnapshot, Fields, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
-import { formatMap, formatValueToPost, simplifyFields } from "./util.js";
+import { formatMap, formatValueToPost, simplifyFields, takeLastComponentFromPathString } from "./util.js";
 export * from './auth.js';
 
 
@@ -116,98 +117,6 @@ export function query(baseQuery: Query, ...additionalQueries: QueryConstraint[])
     return result;
 }
 
-function addConstraintToQuery(query: Query, constraint: QueryConstraint): Query {
-    if ("limit" in constraint) {
-        return addLimitConstraintToQuery(query, constraint);
-    }
-    if ("fieldFilter" in constraint) {
-        return addFilterConstraintToQuery(query, constraint);
-    }
-    if ("direction" in constraint) {
-        return addOrderConstraintToQuery(query, constraint);
-    }
-    return query;
-}
-
-function addFilterConstraintToQuery(query: Query, constraint: QueryFieldFilterConstraint): Query {
-    let where = query.structuredQuery.where;
-    if (!where) {
-        where = constraint;
-    } else {
-        if ("compositeFilter" in where) {
-            where.compositeFilter.filters.push(constraint);
-        } else {
-            where = {
-                compositeFilter: {
-                    op: "AND",
-                    filters: [where, constraint],
-                },
-            }
-        }
-    }
-    return {
-        ...query,
-        structuredQuery: {
-            ...query.structuredQuery,
-            where,
-        }
-    }
-}
-
-function addLimitConstraintToQuery(query: Query, constraint: QueryLimitConstraint): Query {
-    return {
-        ...query,
-        structuredQuery: {
-            ...query.structuredQuery,
-            limit: constraint.limit
-        }
-    }
-}
-
-function addOrderConstraintToQuery(query: Query, constraint: QueryOrderByConstraint): Query {
-    const newVal = { field: { fieldPath: constraint.fieldPath }, direction: constraint.direction };
-    const orderBy = [...query.structuredQuery.orderBy ?? [], newVal];
-    return {
-        ...query,
-        structuredQuery: {
-            ...query.structuredQuery,
-            orderBy
-        }
-    }
-}
-
-type RunQueryResponse = RunQueryResponseDocument[];
-type RunQueryResponseDocument = {
-    document: {
-        name: string;
-        fields: Fields;
-        createdTime: string;
-        updateTime: string;
-    };
-    readTime: string;
-    skippedResults?: number;
-}
-
-export async function runQuery(firestore: Firestore, structuredQuery: StructuredQuery): Promise<RunQueryResponse> {
-    const url = `https://firestore.googleapis.com/v1beta1/projects/${firestore.projectId}/databases/%28default%29/documents:runQuery`;
-    const accessToken = await getAccessToken(firestore);
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ structuredQuery }),
-    });
-    const data = await response.json();
-    if (response.status == 200) {
-        return data;
-    } else {
-        throw new Error(JSON.stringify(data, null, 2));
-    }
-};
-
-
 /**
  * Firestoreからクエリ結果を取得します。
  */
@@ -262,10 +171,6 @@ export async function addDoc(reference: CollectionReference, data: WithFieldValu
     }
 }
 
-function takeLastComponentFromPathString(path: string) {
-    const ary = path.split("/")
-    return ary[ary.length - 1];
-}
 
 export async function setDoc(reference: DocumentReference, data: WithFieldValue): Promise<boolean> {
     const accessToken = await getAccessToken(reference.firestore);
@@ -280,3 +185,37 @@ export async function setDoc(reference: DocumentReference, data: WithFieldValue)
     return res.status === 200;
 }
 
+
+
+export async function batchWrite(firestore: Firestore, ...writes: Write[]) {
+    const batch = {
+        firestore,
+        writes
+    }
+    return batchWriteRaw(batch.firestore, { writes: batch.writes });
+}
+
+export function setWrite(reference: DocumentReference, data: WithFieldValue): Write {
+    return {
+        update: {
+            name: `projects/${reference.firestore.projectId}/databases/(default)/documents/${reference.path}/${reference.id}`,
+            fields: formatMap(data).fields
+        }
+    }
+}
+export function updateWrite(reference: DocumentReference, data: WithFieldValue): Write {
+    return {
+        update: {
+            name: `projects/${reference.firestore.projectId}/databases/(default)/documents/${reference.path}/${reference.id}`,
+            fields: formatMap(data).fields
+        }
+    }
+}
+export function deleteWrite(reference: DocumentReference): Write {
+    return {
+        update: {
+            name: `projects/${reference.firestore.projectId}/databases/(default)/documents/${reference.path}/${reference.id}`,
+            fields: {}
+        }
+    }
+}

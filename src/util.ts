@@ -1,5 +1,11 @@
 import { Fields, FieldValue } from "./types";
 
+
+export function takeLastComponentFromPathString(path: string) {
+    const ary = path.split("/")
+    return ary[ary.length - 1];
+}
+
 export function formatMap(map: any) {
     const fields = {} as any;
     for (const [key, value] of Object.entries(map)) {
