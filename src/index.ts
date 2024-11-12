@@ -1,6 +1,6 @@
 // import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
 import { getAccessToken } from "./auth.js";
-import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
+import { mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, QueryOrderByConstraint, StructuredQuery, WhereFilterOp } from "./query.js";
 import { CollectionReference, DocResponse, DocumentReference, DocumentSnapshot, Fields, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
 import { formatMap, formatValueToPost, simplifyFields } from "./util.js";
 export * from './auth.js';
@@ -98,6 +98,11 @@ export function where(fieldPath: string, opStr: WhereFilterOp, value: unknown): 
     }
 }
 
+export function orderBy(fieldPath: string, directionStr: "asc" | "desc"): QueryOrderByConstraint {
+    const direction = directionStr == "asc" ? "ASCENDING" : "DESCENDING";
+    return { type: "orderBy", direction: direction, fieldPath }
+}
+
 export function limit(limit: number): QueryLimitConstraint {
     return { type: "limit", limit };
 }
@@ -117,6 +122,9 @@ function addConstraintToQuery(query: Query, constraint: QueryConstraint): Query 
     }
     if ("fieldFilter" in constraint) {
         return addFilterConstraintToQuery(query, constraint);
+    }
+    if ("direction" in constraint) {
+        return addOrderConstraintToQuery(query, constraint);
     }
     return query;
 }
@@ -140,7 +148,7 @@ function addFilterConstraintToQuery(query: Query, constraint: QueryFieldFilterCo
     return {
         ...query,
         structuredQuery: {
-            from: [{ collectionId: query.collectionId }],
+            ...query.structuredQuery,
             where,
         }
     }
@@ -152,6 +160,18 @@ function addLimitConstraintToQuery(query: Query, constraint: QueryLimitConstrain
         structuredQuery: {
             ...query.structuredQuery,
             limit: constraint.limit
+        }
+    }
+}
+
+function addOrderConstraintToQuery(query: Query, constraint: QueryOrderByConstraint): Query {
+    const newVal = { field: { fieldPath: constraint.fieldPath }, direction: constraint.direction };
+    const orderBy = [...query.structuredQuery.orderBy ?? [], newVal];
+    return {
+        ...query,
+        structuredQuery: {
+            ...query.structuredQuery,
+            orderBy
         }
     }
 }

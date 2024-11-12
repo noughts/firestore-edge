@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { it, describe, expect } from "vitest";
-import { collection, doc, getData, getDocs, getFirestore, limit, query, runQuery, setDoc, where } from "../src";
+import { collection, doc, getData, getDocs, getFirestore, limit, orderBy, query, runQuery, setDoc, where } from "../src";
 import { StructuredQuery } from '../src/query';
 import { pipe } from "@fxts/core"
 dotenv.config();
@@ -134,7 +134,7 @@ describe("runQuery", () => {
                 }
             }
         })
-        console.log(res.map(x => x.document.fields))
+        console.log(res.map(x => getData(x.document)))
     });
 
     it("orderBy", async () => {
@@ -145,6 +145,23 @@ describe("runQuery", () => {
                     field: { fieldPath: "population" },
                     direction: "DESCENDING"
                 }
+            ]
+        })
+        console.log(res.map(x => getData(x.document)))
+    });
+
+    it("複数のorderBy", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "cities" }],
+            orderBy: [
+                {
+                    field: { fieldPath: "capital" },
+                    direction: "DESCENDING"
+                },
+                {
+                    field: { fieldPath: "population" },
+                    direction: "DESCENDING"
+                },
             ]
         })
         console.log(res.map(x => getData(x.document)))
@@ -210,6 +227,12 @@ describe("Query", async () => {
         const q = query(citiesRef, limit(_limit));
         const res = await getDocs(q);
         expect(res.docs.length).toBe(_limit);
+        console.log(res.docs.map(x => getData(x)))
+    })
+
+    it("orderBy", async () => {
+        const q = query(citiesRef, orderBy("capital", "desc"), orderBy("population", "desc"));
+        const res = await getDocs(q);
         console.log(res.docs.map(x => getData(x)))
     })
 })

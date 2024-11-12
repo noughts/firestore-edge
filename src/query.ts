@@ -4,10 +4,10 @@
 export type StructuredQuery = {
     from: [{ collectionId: string }];
     where?: QueryConstraint;
-    orderBy?: [{
+    orderBy?: {
         field: { fieldPath: string };
         direction: 'ASCENDING' | 'DESCENDING'
-    }];
+    }[];
     limit?: number;
 }
 
@@ -25,6 +25,12 @@ export type QueryLimitConstraint = {
     limit: number;
 }
 
+export type QueryOrderByConstraint = {
+    type: "orderBy";
+    direction: 'ASCENDING' | 'DESCENDING'
+    fieldPath: string;
+}
+
 export type QueryCompositeFilterConstraint = {
     compositeFilter: {
         op: 'AND' | 'OR';
@@ -32,7 +38,7 @@ export type QueryCompositeFilterConstraint = {
     };
 }
 
-export type QueryConstraint = QueryFieldFilterConstraint | QueryCompositeFilterConstraint | QueryLimitConstraint;
+export type QueryConstraint = QueryFieldFilterConstraint | QueryCompositeFilterConstraint | QueryLimitConstraint | QueryOrderByConstraint;
 export type WhereFilterOp = '<' | '<=' | '==' | '!=' | '>=' | '>' | 'array-contains' | 'in' | 'array-contains-any' | 'not-in';
 export type QueryConstraintType = 'where' | 'orderBy' | 'limit' | 'limitToLast' | 'startAt' | 'startAfter' | 'endAt' | 'endBefore';
 
