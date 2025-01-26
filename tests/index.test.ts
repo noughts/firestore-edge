@@ -1,7 +1,5 @@
-import { describe, expect, it } from "vitest"
-import { addDoc, collection, doc, getData, getDoc, getFirestore, setDoc } from "../src/index"
-import dotenv from 'dotenv';
-dotenv.config();
+import { describe, expect, it } from "bun:test"
+import { addDoc, collection, doc, getData, getDoc, getFirestore, setDoc } from "../src/main"
 
 
 
@@ -34,13 +32,12 @@ describe("getDoc", () => {
         const ref = doc(db, "results", "switch");
         const snapshot = await getDoc(ref);
     })
-    it("2回目はキャッシュ済みのaccessTokenがが使われる", async () => {
-        const _doc = doc(db, "results", "switch");
+    it("2回目はキャッシュ済みのaccessTokenが使われる", async () => {
+        const _doc = doc(db, "results", "ringfit");
         const snapshot = await getDoc(_doc);
         expect(snapshot).toBeDefined();
         if (!snapshot) return;
         const data = getData(snapshot);
-        console.log(data)
     })
 })
 

@@ -1,7 +1,5 @@
-import { it } from "vitest";
+import { it } from "bun:test";
 import OpenAI from "openai";
-import dotenv from 'dotenv';
-dotenv.config();
 
 
 async function createEmbedding(input: string): Promise<number[]> {

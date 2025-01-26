@@ -1,9 +1,7 @@
-import dotenv from 'dotenv';
-import { it, describe, expect } from "vitest";
-import { collection, doc, getData, getDocs, getFirestore, limit, orderBy, query, setDoc, where } from "../src";
-import { runQuery, StructuredQuery } from '../src/query';
+import { it, describe, expect } from "bun:test";
+import { collection, doc, getData, getDocs, getFirestore, limit, orderBy, query, setDoc, where } from "../src/main";
+import { runQuery, type StructuredQuery } from '../src/query';
 import { pipe } from "@fxts/core"
-dotenv.config();
 
 
 

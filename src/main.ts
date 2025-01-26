@@ -1,10 +1,9 @@
-// import 時には .js 拡張子をつけないとコンパイル後に利用できないので注意！
-import { getAccessToken } from "./auth.js";
-import { batchWriteRaw, Write, WriteBatch } from "./batch.js";
-import { addConstraintToQuery, mapOperator, QueryConstraint, QueryFieldFilterConstraint, QueryLimitConstraint, QueryOrderByConstraint, runQuery, StructuredQuery, WhereFilterOp } from "./query.js";
-import { CollectionReference, DocResponse, DocumentReference, DocumentSnapshot, Fields, Firestore, Query, QuerySnapshot, WithFieldValue } from "./types";
-import { formatMap, formatValueToPost, simplifyFields, takeLastComponentFromPathString } from "./util.js";
-export * from './auth.js';
+import { getAccessToken } from "./auth";
+import { batchWriteRaw, type Write } from "./batch";
+import { type WhereFilterOp, type QueryFieldFilterConstraint, mapOperator, type QueryOrderByConstraint, type QueryLimitConstraint, type QueryConstraint, addConstraintToQuery, runQuery } from "./query";
+import type { Firestore, DocumentReference, CollectionReference, DocumentSnapshot, DocResponse, Query, QuerySnapshot, Fields, WithFieldValue } from "./types";
+import { takeLastComponentFromPathString, formatValueToPost, simplifyFields, formatMap } from "./util";
+
 
 
 
@@ -70,9 +69,9 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
-    if (reference.firestore.profile) console.time("fetch")
+    if (reference.firestore.profile) console.time("getDoc/fetch")
     const res = await fetch(url, { method, headers });
-    if (reference.firestore.profile) console.timeEnd("fetch")
+    if (reference.firestore.profile) console.timeEnd("getDoc/fetch")
     const data: DocResponse = await res.json();
     if (data.error) {
         return undefined;

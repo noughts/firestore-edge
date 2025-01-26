@@ -1,5 +1,5 @@
 import { getAccessToken } from "./auth";
-import { Fields, Firestore, Query } from "./types";
+import type { Fields, Firestore, Query } from "./types";
 
 
 

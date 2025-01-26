@@ -1,5 +1,5 @@
 import { getAccessToken } from "./auth";
-import { Fields, Firestore } from "./types";
+import type { Fields, Firestore } from "./types";
 
 export type WriteBatch = {
     firestore: Firestore;

@@ -1,4 +1,4 @@
-import { StructuredQuery } from "./query";
+import type { StructuredQuery } from "./query";
 
 export type Firestore = {
     projectId: string;

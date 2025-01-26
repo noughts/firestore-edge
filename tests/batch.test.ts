@@ -1,8 +1,6 @@
-import dotenv from 'dotenv';
-import { it } from "vitest";
-import { doc, getFirestore, setWrite, batchWrite } from "../src";
+import { doc, getFirestore, setWrite, batchWrite } from "../src/main";
 import { batchWriteRaw } from "../src/batch";
-dotenv.config();
+import { it } from "bun:test"
 
 
 it("batchWrite で batchで複数の書き込み", async () => {

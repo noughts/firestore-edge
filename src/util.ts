@@ -1,4 +1,4 @@
-import { Fields, FieldValue } from "./types";
+import type { Fields, FieldValue } from "./types";
 
 
 export function takeLastComponentFromPathString(path: string) {

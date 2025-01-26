@@ -1,4 +1,4 @@
-import { Firestore } from "./types";
+import type { Firestore } from "./types";
 
 
 
