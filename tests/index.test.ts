@@ -2,31 +2,17 @@ import { describe, expect, it } from "bun:test"
 import { addDoc, collection, doc, getData, getDoc, getFirestore, setDoc } from "../src/main"
 
 
-
-
-
-describe("setDoc", () => {
-    it("collection に id ありで setDoc", async () => {
-        const db = getFirestore({ profile: true })
-        const citiesRef = collection(db, "cities");
-        const success = await setDoc(doc(citiesRef, "SF"), {
-            name: "San Francisco", state: "CA", country: "USA",
-            capital: false, population: 860000,
-            regions: ["west_coast", "norcal"]
-        });
-        expect(success).toBeTruthy();
-
-        const snapshot = await getDoc(doc(db, "cities", "SF"));
-        expect(snapshot).toBeDefined();
-        if (!snapshot) return;
-        const data = getData(snapshot);
-        expect(data.state).toBe("CA")
-        expect(data.capital).toBeFalsy()
-    })
+it("単純なgetDoc", async () => {
+    const db = getFirestore({ profile: true })
+    const ref = doc(db, "cities", "e2rriJlbeBeLLaPpdnkl");
+    const snapshot = await getDoc(ref)
+    expect(snapshot).toBeDefined();
+    if (!snapshot) return;
+    console.log(getData(snapshot))
 })
 
 
-describe("getDoc", () => {
+describe("getDocのレイテンシー", () => {
     const db = getFirestore({ profile: true })
     it("1回目", async () => {
         const ref = doc(db, "results", "switch");

@@ -164,7 +164,7 @@ export async function addDoc(reference: CollectionReference, data: WithFieldValu
     const json: DocResponse = await res.json();
     return {
         firestore: reference.firestore,
-        path: json.name,
+        path: reference.path,
         id: takeLastComponentFromPathString(json.name),
     }
 }

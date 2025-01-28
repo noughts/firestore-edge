@@ -26,7 +26,7 @@ export function formatValueToPost(value: any): any {
         if (Number.isInteger(value)) {
             return { integerValue: value.toString() };
         } else {
-            return { doubleValue: value };
+            return { doubleValue: value.toString() };
         }
     } else if (typeof value == "string") {
         return { stringValue: value };
