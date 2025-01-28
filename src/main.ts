@@ -15,7 +15,6 @@ export function getFirestore(config?: Partial<Firestore>): Firestore {
     if (!privateKey) throw new Error('process.env["FIREBASE_PRIVATE_KEY"] is not set');
     if (!clientEmail) throw new Error('process.env["FIREBASE_CLIENT_EMAIL"] is not set');
     return {
-        cachedAccessToken: config?.cachedAccessToken,
         projectId,
         clientEmail,
         privateKey,
@@ -60,7 +59,7 @@ export function collection(firestore: Firestore, path: string): CollectionRefere
 
 export async function getDoc(reference: DocumentReference): Promise<DocumentSnapshot | undefined> {
     if (reference.firestore.profile) console.time("getAccessToken")
-    const accessToken = reference.firestore.cachedAccessToken ?? await getAccessToken(reference.firestore);
+    const accessToken = await getAccessToken(reference.firestore);
     if (reference.firestore.profile) console.timeEnd("getAccessToken")
 
     const url = `https://firestore.googleapis.com/v1beta1/projects/${reference.firestore.projectId}/databases/%28default%29/documents/${reference.path}/${reference.id}`;

@@ -3,7 +3,7 @@ import type { Firestore } from "./types";
 
 
 
-let accessTokenPromise = Promise.resolve("");
+let cachedAccessToken: string | undefined;
 let expiresAt = 0;
 
 export async function getAccessToken(firestore: Firestore): Promise<string> {
@@ -11,17 +11,16 @@ export async function getAccessToken(firestore: Firestore): Promise<string> {
     const ttl = 3600;
 
     const now = Math.floor(Date.now() / 1000);
-    if (now >= expiresAt) {
-        accessTokenPromise = requestAccessToken(firestore, scope, ttl);
-        expiresAt = now + ttl;
+
+    if (cachedAccessToken && now < expiresAt) {
+        console.log("キャッシュ済みのaccessTokenを使います")
+        return cachedAccessToken;
     }
 
-    try {
-        return accessTokenPromise;
-    } catch (e) {
-        expiresAt = 0;
-        throw e;
-    }
+    console.log("accessTokenを新規発行します")
+    cachedAccessToken = await requestAccessToken(firestore, scope, ttl);
+    expiresAt = now + ttl;
+    return cachedAccessToken;
 }
 
 

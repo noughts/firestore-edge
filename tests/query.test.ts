@@ -25,7 +25,7 @@ describe("Query作成", () => {
         expect(q.structuredQuery).toStrictEqual(expected)
     })
 
-    describe("複合クエリ", () => {
+    describe("複合クエリ作成", () => {
         const expected: StructuredQuery = {
             from: [{ collectionId: "cities" }],
             where: {
@@ -107,7 +107,7 @@ describe("runQuery", () => {
         console.log(res.map(x => getData(x.document)))
     });
 
-    it("複合クエリ", async () => {
+    it("複合クエリ実行", async () => {
         const res = await runQuery(db, {
             from: [{ collectionId: "cities" }],
             where: {

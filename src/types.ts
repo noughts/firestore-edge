@@ -4,7 +4,6 @@ export type Firestore = {
     projectId: string;
     privateKey: string;
     clientEmail: string;
-    cachedAccessToken?: string;
     profile?: boolean;
 }
 
