@@ -2,7 +2,7 @@ import { getAccessToken } from "./auth";
 import { batchWriteRaw, type Write } from "./batch";
 import { type WhereFilterOp, type QueryFieldFilterConstraint, mapOperator, type QueryOrderByConstraint, type QueryLimitConstraint, type QueryConstraint, addConstraintToQuery, runQuery } from "./query";
 import type { Firestore, DocumentReference, CollectionReference, DocumentSnapshot, DocResponse, Query, QuerySnapshot, Fields, WithFieldValue } from "./types";
-import { takeLastComponentFromPathString, formatValueToPost, simplifyFields, formatMap } from "./util";
+import { takeLastComponentFromPathString, serializeValue, deserializeObject, serializeObject } from "./util";
 
 
 
@@ -92,7 +92,7 @@ export function where(fieldPath: string, opStr: WhereFilterOp, value: unknown): 
         fieldFilter: {
             field: { fieldPath },
             op: mapOperator(opStr),
-            value: formatValueToPost(value),
+            value: serializeValue(value),
         },
     }
 }
@@ -143,7 +143,7 @@ export async function getDocs(query: Query): Promise<QuerySnapshot> {
 
 
 export function getData(snapshot: { fields: Fields }): any {
-    return simplifyFields(snapshot.fields);
+    return deserializeObject(snapshot.fields);
 }
 
 
@@ -158,7 +158,7 @@ export async function addDoc(reference: CollectionReference, data: WithFieldValu
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
-    const body = JSON.stringify(formatMap(data));
+    const body = JSON.stringify(serializeObject(data));
 
     const res = await fetch(url, { method, headers, body });
     const json: DocResponse = await res.json();
@@ -178,7 +178,7 @@ export async function setDoc(reference: DocumentReference, data: WithFieldValue)
         "Authorization": `Bearer ${accessToken}`,
         "Content-Type": "application/json"
     };
-    const body = JSON.stringify(formatMap(data));
+    const body = JSON.stringify(serializeObject(data));
     const res = await fetch(url, { method, headers, body });
     return res.status === 200;
 }
@@ -197,7 +197,7 @@ export function setWrite(reference: DocumentReference, data: WithFieldValue): Wr
     return {
         update: {
             name: `projects/${reference.firestore.projectId}/databases/(default)/documents/${reference.path}/${reference.id}`,
-            fields: formatMap(data).fields
+            fields: serializeObject(data).fields
         }
     }
 }
@@ -205,7 +205,7 @@ export function updateWrite(reference: DocumentReference, data: WithFieldValue):
     return {
         update: {
             name: `projects/${reference.firestore.projectId}/databases/(default)/documents/${reference.path}/${reference.id}`,
-            fields: formatMap(data).fields
+            fields: serializeObject(data).fields
         }
     }
 }

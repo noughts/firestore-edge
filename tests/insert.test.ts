@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { addDoc, collection, doc, getData, getDoc, getFirestore, setDoc } from "../src/main"
 import { getAccessToken } from "../src/auth";
-import { formatMap } from "../src/util";
+import { serializeObject } from "../src/util";
 
 it("オブジェクトをFirestoreに保存する形式にエンコード", () => {
     const data = {
@@ -12,7 +12,7 @@ it("オブジェクトをFirestoreに保存する形式にエンコード", () =
             regions: ["west_coast", "norcal"]
         },
     }
-    console.dir(formatMap(data), { depth: null })
+    console.dir(serializeObject(data), { depth: null })
 })
 
 
