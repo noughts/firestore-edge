@@ -86,7 +86,12 @@ function deserializeValue(value: FieldValue): any {
         return value.arrayValue.values.map(deserializeValue);
     }
     if ('mapValue' in value) {
-        return deserializeObject(value.mapValue.fields);
+        const res = deserializeObject(value.mapValue.fields);
+        if (res.__type__ == "__vector__") {
+            return res.value;
+        } else {
+            return res;
+        }
     }
     return null; // 想定されていない値には null を返す
 }

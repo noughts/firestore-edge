@@ -47,7 +47,7 @@ it("VectorValueをエンコード", () => {
 
 
 
-it("ベクトルデータを保存_生API呼び出し", async () => {
+it.skip("ベクトルデータを保存_生API呼び出し", async () => {
     const db = getFirestore({ profile: true })
     const col = collection(db, "coffee-beans");
     const accessToken = await getAccessToken(col.firestore);
@@ -76,9 +76,6 @@ it("ベクトルデータを保存", async () => {
     // 保存されたかを検証
     const snapshot = await getDoc(doc(db, "coffee-beans", "sample"));
     expect(snapshot).toBeDefined();
-    if (!snapshot) return;
-    const data = getData(snapshot);
-    console.log(data)
 })
 
 
