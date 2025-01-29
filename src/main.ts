@@ -1,7 +1,7 @@
 import { getAccessToken } from "./auth";
 import { batchWriteRaw, type Write } from "./batch";
 import { type WhereFilterOp, type QueryFieldFilterConstraint, mapOperator, type QueryOrderByConstraint, type QueryLimitConstraint, type QueryConstraint, addConstraintToQuery, runQuery } from "./query";
-import type { Firestore, DocumentReference, CollectionReference, DocumentSnapshot, DocResponse, Query, QuerySnapshot, Fields, WithFieldValue } from "./types";
+import type { Firestore, DocumentReference, CollectionReference, DocumentSnapshot, DocResponse, Query, QuerySnapshot, Fields, WithFieldValue, VectorValue } from "./types";
 import { takeLastComponentFromPathString, serializeValue, deserializeObject, serializeObject } from "./util";
 
 
@@ -216,4 +216,8 @@ export function deleteWrite(reference: DocumentReference): Write {
             fields: {}
         }
     }
+}
+
+export function vectorValue(value: number[]): VectorValue {
+    return { values: value, type: "vectorValue" }
 }

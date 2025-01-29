@@ -72,4 +72,9 @@ export type DocResponse = FirestoreDocument & {
     }
 }
 
+export type VectorValue = {
+    values: number[];
+    type: "vectorValue"
+}
+
 type SnapshotMetadata = {}

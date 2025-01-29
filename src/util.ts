@@ -1,4 +1,4 @@
-import type { Fields, FieldValue } from "./types";
+import type { Fields, FieldValue, VectorValue } from "./types";
 
 
 export function takeLastComponentFromPathString(path: string) {
@@ -20,6 +20,23 @@ export function serializeObject(map: any) {
 export function serializeValue(value: any): any {
     if (value == null) {
         return { nullValue: null };
+    }
+    if (value.type === "vectorValue") {
+        // serializeObjectで変換できれば一番スマートだが、整数値が入るときに doubleValue ではなく integerValue として扱われてしまい Firestore に保存時にエラーになるので、手書きして全てを doubleValue で固定します
+        return {
+            mapValue: {
+                fields: {
+                    __type__: {
+                        stringValue: "__vector__"
+                    },
+                    value: {
+                        arrayValue: {
+                            values: value.values.map((x: number) => ({ doubleValue: x.toString() })),
+                        }
+                    },
+                }
+            }
+        }
     }
     if (typeof value == "boolean") {
         return { booleanValue: value };
