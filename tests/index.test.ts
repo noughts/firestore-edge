@@ -11,6 +11,23 @@ it("単純なgetDoc", async () => {
     console.log(getData(snapshot))
 })
 
+describe("converter", () => {
+    const db = getFirestore()
+    const ref = doc(db, "phones", "iPhone")
+    it("テスト用データ保存", async () => {
+        await setDoc(ref, {
+            name: "iPhone",
+            releasedAt: new Date(2007, 1, 1)
+        })
+    })
+    it("データロード", async () => {
+        const res = await getDoc(ref);
+        if (!res) return;
+        console.log(res?.fields)
+        console.log(getData(res))
+    })
+})
+
 
 describe("getDocのレイテンシー", () => {
     const db = getFirestore({ profile: true })

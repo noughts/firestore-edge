@@ -85,6 +85,9 @@ function deserializeValue(value: FieldValue): any {
     if ('arrayValue' in value) {
         return value.arrayValue.values.map(deserializeValue);
     }
+    if ("timestampValue" in value) {
+        return new Date(value.timestampValue as string);
+    }
     if ('mapValue' in value) {
         const res = deserializeObject(value.mapValue.fields);
         if (res.__type__ == "__vector__") {

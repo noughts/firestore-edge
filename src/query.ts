@@ -11,6 +11,19 @@ export type StructuredQuery = {
         direction: 'ASCENDING' | 'DESCENDING'
     }[];
     limit?: number;
+    findNearest?: FindNearest;
+}
+
+type FindNearest = {
+    vectorField: FieldReference;
+    queryVector: any;
+    distanceMeasure: "EUCLIDEAN" | "COSINE" | "DOT_PRODUCT";
+    limit: number;
+    // distanceResultField
+}
+
+type FieldReference = {
+    fieldPath: string;
 }
 
 

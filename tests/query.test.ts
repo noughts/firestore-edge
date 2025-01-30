@@ -83,7 +83,7 @@ describe("Query作成", () => {
 
 
 
-describe("runQuery", () => {
+describe("素のrunQuery", () => {
     const db = getFirestore({ profile: true })
 
     it("getAll", async () => {
@@ -104,7 +104,11 @@ describe("runQuery", () => {
                 }
             }
         })
-        console.log(res.map(x => getData(x.document)))
+        const cities = res.map(x => getData(x.document));
+        console.log(cities)
+        cities.forEach(x => {
+            expect(x.capital).toBeTrue();
+        })
     });
 
     it("複合クエリ実行", async () => {
@@ -170,7 +174,33 @@ describe("runQuery", () => {
             from: [{ collectionId: "cities" }],
             limit: 2,
         })
-        console.log(res.map(x => getData(x.document)))
+        expect(res.length).toBe(2);
+    });
+
+    it("ベクタークエリ", async () => {
+        const res = await runQuery(db, {
+            from: [{ collectionId: "coffee-beans" }],
+            findNearest: {
+                vectorField: { fieldPath: "embedding" },
+                limit: 1,
+                queryVector: {
+                    mapValue: {
+                        fields: {
+                            __type__: {
+                                stringValue: "__vector__"
+                            },
+                            value: {
+                                arrayValue: {
+                                    values: [1, 2, 3].map((x: number) => ({ doubleValue: x.toString() })),
+                                }
+                            },
+                        }
+                    }
+                },
+                distanceMeasure: "COSINE",
+            }
+        });
+        console.log(res.map(x => x.document))
     });
 
 })
