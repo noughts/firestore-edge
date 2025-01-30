@@ -1,4 +1,5 @@
-import type { StructuredQuery } from "./query";
+import type { StructuredQuery, Value } from "./rest-api-types";
+
 
 export type Firestore = {
     projectId: string;
@@ -29,15 +30,12 @@ export type DocumentReference = {
     path: string;
 }
 
-export type DocumentData = {
-
-}
 
 export type DocumentSnapshot = {
     id: string;
     metadata?: SnapshotMetadata;
     ref: DocumentReference;
-    fields: Fields;
+    fields: Record<string, Value>;
 }
 
 export type QuerySnapshot = {
@@ -46,35 +44,5 @@ export type QuerySnapshot = {
     query: Query;
 }
 
-
-export type FieldValue =
-    | { stringValue: string }
-    | { doubleValue: number }
-    | { integerValue: number }
-    | { booleanValue: boolean }
-    | { arrayValue: { values: FieldValue[] } }
-    | { mapValue: { fields: Record<string, FieldValue> } };
-
-export type Fields = Record<string, FieldValue>;
-
-export type FirestoreDocument = {
-    name: string;
-    fields: Fields;
-    createTime: string;
-    updateTime: string;
-}
-
-export type DocResponse = FirestoreDocument & {
-    error?: {
-        code: number;
-        message: string;
-        status: string;
-    }
-}
-
-export type VectorValue = {
-    values: number[];
-    type: "vectorValue"
-}
 
 type SnapshotMetadata = {}

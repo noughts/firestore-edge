@@ -1,7 +1,8 @@
 import { it, describe, expect } from "bun:test";
-import { collection, doc, getData, getDocs, getFirestore, limit, orderBy, query, setDoc, where } from "../src/main";
-import { runQuery, type StructuredQuery } from '../src/query';
+import { collection, doc, getData, getDocs, getFirestore, limit, orderBy, query, setDoc, vectorValue, where } from "../src/main";
 import { pipe } from "@fxts/core"
+import { runQuery } from "../src/query";
+import type { StructuredQuery } from "../src/rest-api-types";
 
 
 
@@ -90,7 +91,7 @@ describe("素のrunQuery", () => {
         const res = await runQuery(db, {
             from: [{ collectionId: "cities" }]
         });
-        console.log(res.map(x => getData(x.document)))
+        console.log(res)
     });
 
     it("単純な where", async () => {
@@ -178,25 +179,13 @@ describe("素のrunQuery", () => {
     });
 
     it("ベクタークエリ", async () => {
+        const queryVector = vectorValue([1, 2, 3]);
         const res = await runQuery(db, {
             from: [{ collectionId: "coffee-beans" }],
             findNearest: {
                 vectorField: { fieldPath: "embedding" },
                 limit: 1,
-                queryVector: {
-                    mapValue: {
-                        fields: {
-                            __type__: {
-                                stringValue: "__vector__"
-                            },
-                            value: {
-                                arrayValue: {
-                                    values: [1, 2, 3].map((x: number) => ({ doubleValue: x.toString() })),
-                                }
-                            },
-                        }
-                    }
-                },
+                queryVector,
                 distanceMeasure: "COSINE",
             }
         });
@@ -252,14 +241,14 @@ describe("Query", async () => {
 
     it("limit", async () => {
         const _limit = 2;
-        const q = query(citiesRef, limit(_limit));
+        const q = limit(citiesRef, _limit);
         const res = await getDocs(q);
         expect(res.docs.length).toBe(_limit);
         console.log(res.docs.map(x => getData(x)))
     })
 
     it("orderBy", async () => {
-        const q = query(citiesRef, orderBy("capital", "desc"), orderBy("population", "desc"));
+        const q = orderBy(citiesRef, [{ field: "capital", direction: "desc" }, { field: "population", direction: "desc" }])
         const res = await getDocs(q);
         console.log(res.docs.map(x => getData(x)))
     })

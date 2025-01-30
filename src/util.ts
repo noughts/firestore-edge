@@ -1,4 +1,4 @@
-import type { Fields, FieldValue, VectorValue } from "./types";
+import type { Value } from "./rest-api-types";
 
 
 export function takeLastComponentFromPathString(path: string) {
@@ -21,22 +21,8 @@ export function serializeValue(value: any): any {
     if (value == null) {
         return { nullValue: null };
     }
-    if (value.type === "vectorValue") {
-        // serializeObjectで変換できれば一番スマートだが、整数値が入るときに doubleValue ではなく integerValue として扱われてしまい Firestore に保存時にエラーになるので、手書きして全てを doubleValue で固定します
-        return {
-            mapValue: {
-                fields: {
-                    __type__: {
-                        stringValue: "__vector__"
-                    },
-                    value: {
-                        arrayValue: {
-                            values: value.values.map((x: number) => ({ doubleValue: x.toString() })),
-                        }
-                    },
-                }
-            }
-        }
+    if (value.mapValue?.fields?.__type__?.stringValue === "__vector__") {
+        return value;
     }
     if (typeof value == "boolean") {
         return { booleanValue: value };
@@ -61,7 +47,7 @@ export function serializeValue(value: any): any {
 }
 
 
-export function deserializeObject(fields: Fields): Record<string, any> {
+export function deserializeObject(fields: Record<string, Value>): Record<string, any> {
     const simplifiedObject: Record<string, any> = {};
     for (const key in fields) {
         simplifiedObject[key] = deserializeValue(fields[key]);
@@ -69,7 +55,7 @@ export function deserializeObject(fields: Fields): Record<string, any> {
     return simplifiedObject;
 }
 
-function deserializeValue(value: FieldValue): any {
+function deserializeValue(value: Value): any {
     if ('stringValue' in value) {
         return value.stringValue;
     }

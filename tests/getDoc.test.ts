@@ -8,5 +8,4 @@ it("getDoc()", async () => {
     const snapshot = await getDoc(doc(db, "coffee-beans", "sample"));
     expect(snapshot).toBeDefined();
     if (!snapshot) return;
-    console.log(getData(snapshot))
 })
