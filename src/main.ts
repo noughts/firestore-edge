@@ -29,12 +29,14 @@ export function doc(collection: CollectionReference, path: string): DocumentRefe
 export function doc(arg1: Firestore | CollectionReference, arg2: string, id?: string): DocumentReference {
     if ("projectId" in arg1) {
         return {
+            type: "document",
             firestore: arg1,
             path: arg2,
             id,
         }
     } else {
         return {
+            type: "document",
             firestore: arg1.firestore,
             path: arg1.path,
             id: arg2,
@@ -77,6 +79,7 @@ export async function getDoc(reference: DocumentReference): Promise<DocumentSnap
         id: takeLastComponentFromPathString(data.name),
         fields: data.fields,
         ref: {
+            type: "document",
             id: takeLastComponentFromPathString(data.name),
             path: data.name,
             firestore: reference.firestore,
@@ -141,6 +144,7 @@ export async function getDocs(query: Query): Promise<QuerySnapshot> {
                 path: x.document.name,
                 fields: x.document.fields,
                 ref: {
+                    type: "document",
                     id: takeLastComponentFromPathString(x.document.name),
                     firestore: query.firestore,
                     path: x.document.name,
@@ -176,6 +180,7 @@ export async function addDoc(reference: CollectionReference, data: WithFieldValu
     const res = await fetch(url, { method, headers, body });
     const json: Document = await res.json();
     return {
+        type: "document",
         firestore: reference.firestore,
         path: reference.path,
         id: takeLastComponentFromPathString(json.name),

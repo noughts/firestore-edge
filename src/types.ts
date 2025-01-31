@@ -25,6 +25,7 @@ export type WithFieldValue = {
 };
 
 export type DocumentReference = {
+    type: "document";
     firestore: Firestore;
     id?: string;
     path: string;

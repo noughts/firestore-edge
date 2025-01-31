@@ -1,14 +1,21 @@
 import { describe, expect, it } from "bun:test"
-import { addDoc, collection, doc, getData, getDoc, getFirestore, setDoc } from "../src/main"
+import { addDoc, collection, doc, getData, getDoc, getDocs, getFirestore, setDoc } from "../src/main"
 
 
 it("単純なgetDoc", async () => {
-    const db = getFirestore({ profile: true })
-    const ref = doc(db, "cities", "e2rriJlbeBeLLaPpdnkl");
+    const ref = doc(getFirestore(), "cities", "e2rriJlbeBeLLaPpdnkl");
     const snapshot = await getDoc(ref)
     expect(snapshot).toBeDefined();
     if (!snapshot) return;
     console.log(getData(snapshot))
+})
+
+it("コレクションの内容を全て取得", async () => {
+    const ref = collection(getFirestore(), "cities");
+    const snapshot = await getDocs(ref);
+    expect(snapshot).toBeDefined();
+    if (!snapshot) return;
+    console.log(snapshot)
 })
 
 describe("converter", () => {
